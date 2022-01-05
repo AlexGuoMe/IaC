@@ -4,29 +4,57 @@ variable "web_server_port" {
     default = 8080
 }
 
-output "public_ip" {
-    description = "The public IP of web server"
-    value = aws_instance.example.public_ip
-}
+# output "public_ip" {
+#     description = "The public IP of web server"
+#     value = aws_instance.example.public_ip
+# }
 
 provider "aws" {
     region = "eu-west-2"
 }
 
-resource "aws_instance" "example" {
-    ami           = "ami-0442104f148cf6b7e"
+resource "aws_launch_configuration" "example" {
+    image_id      = "ami-0442104f148cf6b7e"
     instance_type = "t2.micro"
     key_name = "root"
-    vpc_security_group_ids = [aws_security_group.terraform_demo.id]
-    tags = {
-        Name = "terraform demo"
-    }
+    security_groups = [aws_security_group.terraform_demo.id]
     user_data = <<EOF
 #! /bin/bash
 echo "Hello World" > index.html
 nohup busybox httpd -f -p ${var.web_server_port} &
 EOF
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+resource "aws_autoscaling_group" "example" {
+  availability_zones = data.aws_availability_zones.available.names
+  desired_capacity   = 1
+  max_size           = 1
+  min_size           = 1
+  launch_configuration = aws_launch_configuration.example.name
+}
+
+# resource "aws_instance" "example" {
+#     ami           = "ami-0442104f148cf6b7e"
+#     instance_type = "t2.micro"
+#     key_name = "root"
+#     vpc_security_group_ids = [aws_security_group.terraform_demo.id]
+#     tags = {
+#         Name = "terraform demo"
+#     }
+#     user_data = <<EOF
+# #! /bin/bash
+# echo "Hello World" > index.html
+# nohup busybox httpd -f -p ${var.web_server_port} &
+# EOF
+# }
 
 resource "aws_security_group" "terraform_demo" {
     name        = "terraform demo"
