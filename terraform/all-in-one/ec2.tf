@@ -45,6 +45,11 @@ module "ec2_instance" {
   tags = {
     Terraform   = "true"
   }
+
+  # allow get instance tags via curl metadata, so we can use env = prod or stage do sth diff in instance user-data
+  metadata_options = {
+    "instance_metadata_tags" = "enabled"
+  }
 }
 
 # Associate EIP
@@ -53,3 +58,4 @@ resource "aws_eip_association" "eip_assoc" {
   instance_id   = element(module.ec2_instance, count.index).id
   allocation_id = element(aws_eip.ins_eip, count.index).id
 }
+
