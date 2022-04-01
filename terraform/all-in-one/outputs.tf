@@ -10,3 +10,7 @@ output "ins_id" {
   value       = element(module.ec2_instance, 1).id
   # value       = element(module.ec2_instance.*.id, count.index)
 }
+
+output "rt" {
+  value       = module.prod_vpc.public_route_table_ids
+}
